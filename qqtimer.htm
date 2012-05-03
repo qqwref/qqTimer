@@ -110,9 +110,9 @@ function initialize(lookForTimes, checkQueryString) {
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  inspection = getCookie("inspection", 0);
  $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- if (inspection==0) { useBld = getCookie("useBld", 0); }
- else { useBld = 0; setCookie("useBld", 0); }
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
+ if (inspection==0) { useBld = getCookie("useBld", false); }
+ else { useBld = false; setCookie("useBld", false); }
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
  useAvgN = getCookie("useAvgN", 0);
  $('avgn').innerHTML = (useAvgN==1) ? "using" : "not using";
  useMoN = getCookie("useMoN", 0);
@@ -202,7 +202,7 @@ function startTimer(keyCode) {
    inspectionTime = new Date().getTime();
    theTime.style.color = "red";
    inspectionID = setInterval(updateInspec, (timerupdate==1)?10:100);
-  } else if (useBld == 1) {
+  } else if (useBld) {
    timerStatus = 4;
    memoTime = new Date().getTime();
    theTime.style.color = $('memcol').value;
@@ -305,7 +305,7 @@ function updateInspec() {
 function getTime(note) {
  curTime = new Date().getTime();
  
- if (useBld==1) { 
+ if (useBld) { 
   var time = curTime - memoTime;
   var mtime = startTime - memoTime;
  } 
@@ -314,7 +314,7 @@ function getTime(note) {
  }
  times[times.length] = time;
  notes[notes.length] = note;
- if (useBld==1) { 
+ if (useBld) { 
   comments[comments.length] = pretty(mtime) 
  }
  else { 
@@ -457,7 +457,7 @@ var showOptions = 0;
 var timerSize = 2;
 var scrambleSize = 16;
 var inspection = 0;
-var useBld = 0;
+var useBld = false;
 var penalty = 0;
 var useAvgN = 0;
 var viewstats = 1;
@@ -491,9 +491,9 @@ function toggleMilli() {
 }
 
 function toggleBld() {
- if (inspection==0) { useBld = 1 - useBld; }
+ if (inspection==0) { useBld = !useBld; }
  setCookie("useBld", useBld);
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
 
 function toggleMono() {
@@ -552,11 +552,11 @@ function decreaseScrambleSize() {
 
 function toggleInspection() {
  inspection = 1 - inspection;
- if (inspection==1) { useBld = 0; }
+ if (inspection==1) { useBld = false; }
  setCookie("useBld", useBld);
  setCookie("inspection", inspection);
  $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
 
 function toggleAvgN() {
