@@ -383,8 +383,7 @@ function loadList() {
  $('theList').innerHTML = s;
  saveSession();
  // move scrollbar to bottom:
- var window = $('theList');
- window.scrollTop = window.scrollHeight;
+ $('theList').scrollTop = $('theList').scrollHeight;
  changeColor();
 }
 
