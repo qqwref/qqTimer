@@ -82,8 +82,8 @@ function initialize(lookForTimes, checkQueryString) {
 
  timerupdate = getCookie("timerupdate", 1);
  $('toggler').innerHTML = (timerupdate==0) ? "off" : (timerupdate==1) ? "on" : "seconds only";
- useMilli = getCookie("useMilli", 0);
- $('millisec').innerHTML = (useMilli==1) ? "1\/1000 sec" : "1\/100 sec";
+ useMilli = getCookie("useMilli", false);
+ $('millisec').innerHTML = (useMilli) ? "1\/1000 sec" : "1\/100 sec";
  var oldManualEnter = manualEnter;
  manualEnter = getCookie("manualEnter", 0);
  if (manualEnter != oldManualEnter) {
@@ -305,7 +305,7 @@ function updateInspec() {
 function getTime(note) {
  curTime = new Date().getTime();
  
- if (useBld) { 
+ if (useBld) {
   var time = curTime - memoTime;
   var mtime = startTime - memoTime;
  } 
@@ -314,7 +314,7 @@ function getTime(note) {
  }
  times[times.length] = time;
  notes[notes.length] = note;
- if (useBld) { 
+ if (useBld) {
   comments[comments.length] = pretty(mtime) 
  }
  else { 
@@ -451,7 +451,7 @@ function getBrowser() {
 // #################### OPTIONS ####################
 
 
-var useMilli = 0;
+var useMilli = false;
 var manualEnter = 0;
 var showOptions = 0;
 var timerSize = 2;
@@ -483,9 +483,9 @@ function toggleTimer() {
 }
 
 function toggleMilli() {
- useMilli = 1 - useMilli;
+ useMilli = !useMilli;
  setCookie("useMilli", useMilli);
- $('millisec').innerHTML = (useMilli==1) ? "1\/1000 sec" : "1\/100 sec";
+ $('millisec').innerHTML = (useMilli) ? "1\/1000 sec" : "1\/100 sec";
  loadList();
  getStats(true);
 }
@@ -976,7 +976,7 @@ function getAvgSD(start, nsolves, SD) {
  var timeArr = [], t, j;
  for (j=0; j<nsolves; j++) {
   t = (notes[start+j]==1 ? -1 : times[start+j]/10 + notes[start+j]*100);
-  t = (useMilli==0 ? 10*Math.round(t) : 10*t);
+  t = (useMilli ? 10*t : 10*Math.round(t));
   timeArr[timeArr.length] = [t, j];
  }
 
@@ -1015,7 +1015,7 @@ function getMeanSD(start, nsolves, SD) {
  var timeArr = [], t, j;
  for (j=0; j<nsolves; j++) {
   t = (notes[start+j]==1 ? -1 : times[start+j]/10 + notes[start+j]*100);
-  t = (useMilli==0 ? 10*Math.round(t) : 10*t);
+  t = (useMilli ? 10*t : 10*Math.round(t));
   timeArr[timeArr.length] = [t, j];
  }
 
@@ -1053,15 +1053,15 @@ function trim(number, nDigits) {
 
 function pretty(time) {
  if (time < 0) {return "DNF";}
- time = Math.round(time / (useMilli==1 ? 1 : 10));
- var bits = time % (useMilli==1 ? 1000 : 100);
- time = (time - bits) / (useMilli==1 ? 1000 : 100);
+ time = Math.round(time / (useMilli ? 1 : 10));
+ var bits = time % (useMilli ? 1000 : 100);
+ time = (time - bits) / (useMilli ? 1000 : 100);
  var secs = time % 60;
  var mins = ((time - secs) / 60) % 60;
  var hours = (time - secs - 60 * mins) / 3600;
  var s = "" + bits;
  if (bits < 10) {s = "0" + s;}
- if (bits < 100 && useMilli==1) {s = "0" + s;}
+ if (bits < 100 && useMilli) {s = "0" + s;}
  s = secs + "." + s;
  if (secs < 10 && (mins > 0 || hours > 0)) {s = "0" + s;}
  if (mins > 0 || hours > 0) {s = mins + ":" + s;}
