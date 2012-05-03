@@ -28,6 +28,9 @@ var highlightID;
 var sessionID=0;
 var initoncesq1 = 1;
 
+// store commonly used elements, so we don't hit the DOM all the time
+var theTime, scrambleEl;
+
 function $(str){return document.getElementById(str);}
 
 
@@ -42,6 +45,9 @@ window.onkeydown = function(event) {checkKey(event.keyCode); };
 window.onkeyup = function(event) {startTimer(event.keyCode); };
 
 function initialize(lookForTimes, checkQueryString) {
+  theTime = $('theTime');
+  scrambleEl = $('scramble');
+
  loadOptBoxes();
  var query = ""; // query string for scrambles
  if (checkQueryString) {
@@ -91,14 +97,14 @@ function initialize(lookForTimes, checkQueryString) {
  $('hcol').value = (a=getCookie("hColor"))===null ? "yellow" : a;
  $('memcol').value = (a=getCookie("memColor"))===null ? "green" : a;
  $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- $('theTime').innerHTML = (manualEnter==1) ?
+ theTime.innerHTML = (manualEnter==1) ?
   "<input id='timeEntry' size=12 style='font-size:100%'>"+
   " <span onclick='stopTimer(13);' class='a' style='color:"+
   parseColor($('lcol').value)+"'>enter</span>" : "ready";
  timerSize = (a=getCookie("timerSize"))===null ? 2 : a;
- $('theTime').style.fontSize = timerSize + "em";
+ theTime.style.fontSize = timerSize + "em";
  scrambleSize = (a=getCookie("scrSize"))===null ? 16 : parseInt(a,10);
- $('scramble').style.fontSize = scrambleSize + "px";
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
@@ -113,7 +119,7 @@ function initialize(lookForTimes, checkQueryString) {
  $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
  useMono = (a=getCookie("useMono"))===null ? 0 : a;
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
- $('scramble').style.fontFamily = (useMono==1) ? "monospace" : "serif";
+ scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
  $('getlast').style.color = parseColor($('lcol').value);
  type = (a=getCookie("scrType"))===null ? "333" : a;
  if (query.length > 0) type = query;
@@ -190,47 +196,47 @@ function startTimer(keyCode) {
  if (timerStatus == 0 && manualEnter == 0 && keyCode == 32 && importFocus == 0) {
   timerStatus = 3;
  } else if (timerStatus == 3 && manualEnter == 0 && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
-  if (type=="sqrs") { $('scramble').innerHTML = "scramble: loading... "; }
+  if (type=="sqrs") { scrambleEl.innerHTML = "scramble: loading... "; }
   if (inspection == 1) {
    timerStatus = 2;
    inspectionTime = new Date().getTime();
-   $('theTime').style.color = "red";
+   theTime.style.color = "red";
    inspectionID = setInterval(updateInspec, (timerupdate==1)?10:100);
   } else if (useBld == 1) {
    timerStatus = 4;
    memoTime = new Date().getTime();
-   $('theTime').style.color = $('memcol').value;
+   theTime.style.color = $('memcol').value;
    if (timerupdate > 0) {memoID = setInterval(updateMemo, (timerupdate==1)?10:100);}
-   else {$('theTime').innerHTML = "memorizing";}
+   else {theTime.innerHTML = "memorizing";}
   } else {
    timerStatus = 1;
    startTime = new Date().getTime();
    penalty = 0;
-   $('theTime').style.color = $('fcol').value;
+   theTime.style.color = $('fcol').value;
    if (timerupdate > 0) {timerID = setInterval(updateTimer, (timerupdate==1)?10:100);}
-   else {$('theTime').innerHTML = "running";}
+   else {theTime.innerHTML = "running";}
   }
  } else if (timerStatus == 4 && keyCode == 32) {
   timerStatus = 1;
   startTime = new Date().getTime();
-  $('theTime').style.color = $('fcol').value;
+  theTime.style.color = $('fcol').value;
   var memoLength = startTime - memoTime;
   if (timerupdate > 0) {
    clearInterval(memoID);
    timerID = setInterval(updateMemo, (timerupdate==1)?10:100);
   }
-  else {$('theTime').innerHTML = "running";}
+  else {theTime.innerHTML = "running";}
  } else if (timerStatus == 2 && keyCode == 32) {
   timerStatus = 1;
   startTime = new Date().getTime();
-  $('theTime').style.color = $('fcol').value;
+  theTime.style.color = $('fcol').value;
   var inspecLength = startTime - inspectionTime;
   penalty = (inspecLength < 15000) ? 0 : (inspecLength < 17000) ? 2 : 1;
   clearInterval(inspectionID);
   if (timerupdate > 0) {
    timerID = setInterval(updateTimer, (timerupdate==1)?10:100);
   }
-  else {$('theTime').innerHTML = "running";}
+  else {theTime.innerHTML = "running";}
  }
 }
 
@@ -274,9 +280,9 @@ function updateTimer() {
  curTime = new Date().getTime();
  var time = curTime - startTime;
  if (timerupdate == 1) {
-  $('theTime').innerHTML = pretty(time);
+  theTime.innerHTML = pretty(time);
  } else {
-  $('theTime').innerHTML = pretty(time).split(".")[0];
+  theTime.innerHTML = pretty(time).split(".")[0];
  }
 }
 
@@ -284,16 +290,16 @@ function updateMemo() {
  curTime = new Date().getTime();
  var time = curTime - memoTime;
  if (timerupdate == 1) {
-  $('theTime').innerHTML = pretty(time);
+  theTime.innerHTML = pretty(time);
  } else {
-  $('theTime').innerHTML = pretty(time).split(".")[0];
+  theTime.innerHTML = pretty(time).split(".")[0];
  }
 }
 
 function updateInspec() {
  curTime = new Date().getTime();
  var time = curTime - inspectionTime;
- $('theTime').innerHTML = (time > 17000) ? "DNF" : (time > 15000) ? "+2" : 15-Math.floor(time/1000);
+ theTime.innerHTML = (time > 17000) ? "DNF" : (time > 15000) ? "+2" : 15-Math.floor(time/1000);
 }
 
 function getTime(note) {
@@ -314,7 +320,7 @@ function getTime(note) {
  else { 
   comments[comments.length] = ""; 
  }
- $('theTime').innerHTML = pretty(time);
+ theTime.innerHTML = pretty(time);
  clearHighlight();
  loadList();
  getStats(true); // should be false, but it doesn't hurt
@@ -407,7 +413,7 @@ function del(index) {
 }
 
 function getlastscramble() {
- $('scramble').innerHTML = "scramble: " + scramble + "<br> last scramble: " + lastscramble;
+ scrambleEl.innerHTML = "scramble: " + scramble + "<br> last scramble: " + lastscramble;
  $('getlast').innerHTML = "";
 }
 
@@ -494,7 +500,7 @@ function toggleMono() {
  useMono = 1 - useMono;
  setCookie("useMono", useMono);
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
- $('scramble').style.fontFamily = (useMono==1) ? "monospace" : "serif";
+ scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
  $('getlast').style.color = parseColor($('lcol').value);
 }
 
@@ -503,7 +509,7 @@ function toggleInput() {
  manualEnter = 1 - manualEnter;
  setCookie("manualEnter", manualEnter);
  $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- $('theTime').innerHTML = (manualEnter==1) ?
+ theTime.innerHTML = (manualEnter==1) ?
   "<input id='timeEntry' size=12 style='font-size:100%'>"+
   " <span onclick='stopTimer(13);' class='a' style='color:"+
   parseColor($('lcol').value)+"'>enter</span>" : "ready";
@@ -518,14 +524,14 @@ function toggleOptions() {
 function increaseSize() {
  timerSize++;
  setCookie("timerSize", timerSize);
- $('theTime').style.fontSize = timerSize + "em"; $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
+ theTime.style.fontSize = timerSize + "em"; $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
 }
 
 function decreaseSize() {
  if (timerSize >= 2) timerSize--;
  setCookie("timerSize", timerSize);
- $('theTime').style.fontSize = timerSize + "em";
+ theTime.style.fontSize = timerSize + "em";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
 }
@@ -533,14 +539,14 @@ function decreaseSize() {
 function increaseScrambleSize() {
  scrambleSize+=4;
  setCookie("scrSize", scrambleSize);
- $('scramble').style.fontSize = scrambleSize + "px";
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
 }
 
 function decreaseScrambleSize() {
  if (scrambleSize > 8) scrambleSize-=4;
  setCookie("scrSize", scrambleSize);
- $('scramble').style.fontSize = scrambleSize + "px";
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
 }
 
@@ -1595,7 +1601,7 @@ function scrambleIt(){
   megascramble([["OMG"],["WOW"],["WTF"],[["WOO-HOO","WOO-HOO","MATYAS","YES","YES","YAY","YEEEEEEEEEEEES"]],["HAHA"],["XD"],[":D"],["LOL"]],["","","","!!!"]);
  }
  scramble = ss[0];
- $('scramble').innerHTML = "scramble: " + scramble + "&nbsp;";
+ scrambleEl.innerHTML = "scramble: " + scramble + "&nbsp;";
 }
 
 // Clock functions.
