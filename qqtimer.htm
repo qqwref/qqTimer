@@ -25,10 +25,10 @@ var timerupdate = 1;
 var highlightStart;
 var highlightStop;
 var highlightID;
-var sessionID=0;
+var sessionID = 0;
 var initoncesq1 = 1;
 
-// store commonly used elements, so we don't hit the DOM all the time
+// cache commonly used elements, so we don't hit the DOM all the time
 var theTime, scrambleEl;
 
 function $(str){return document.getElementById(str);}
@@ -37,7 +37,7 @@ function $(str){return document.getElementById(str);}
 // #################### TIMER STUFF ####################
 
 // deal with styles
-var styleName = "style" + ((a=getCookie("style"))==null?0:a) + ".css";
+var styleName = "style" + getCookie("style", 0) + ".css";
 document.writeln("<link rel='stylesheet' type='text/css' href='"+styleName+"'>");
 
 // firefox 9.0.1 bugfix
@@ -80,48 +80,48 @@ function initialize(lookForTimes, checkQueryString) {
  if (timerStatus != 0) {clearInterval(timerID); clearInterval(inspectionID);}
  timerStatus = 3;
 
- timerupdate = (a=getCookie("timerupdate"))===null ? 1 : a;
+ timerupdate = getCookie("timerupdate", 1);
  $('toggler').innerHTML = (timerupdate==0) ? "off" : (timerupdate==1) ? "on" : "seconds only";
- useMilli = (a=getCookie("useMilli"))===null ? 0 : a;
+ useMilli = getCookie("useMilli", 0);
  $('millisec').innerHTML = (useMilli==1) ? "1\/1000 sec" : "1\/100 sec";
  var oldManualEnter = manualEnter;
- manualEnter = (a=getCookie("manualEnter"))===null ? 0 : a;
- if (manualEnter!=oldManualEnter) {
+ manualEnter = getCookie("manualEnter", 0);
+ if (manualEnter != oldManualEnter) {
   toggleInput();
-  manualEnter = 1-manualEnter;
+  manualEnter = 1 - manualEnter;
  }
- $('tcol').value = (a=getCookie("tColor"))===null ? "00ff00" : a;
- $('bcol').value = (a=getCookie("bColor"))===null ? "white" : a;
- $('fcol').value = (a=getCookie("fColor"))===null ? "black" : a;
- $('lcol').value = (a=getCookie("lColor"))===null ? "blue" : a;
- $('hcol').value = (a=getCookie("hColor"))===null ? "yellow" : a;
- $('memcol').value = (a=getCookie("memColor"))===null ? "green" : a;
+ $('tcol').value = getCookie("tColor", "00ff00");
+ $('bcol').value = getCookie("bColor", "white");
+ $('fcol').value = getCookie("fColor", "black");
+ $('lcol').value = getCookie("lColor", "blue");
+ $('hcol').value = getCookie("hColor", "yellow");
+ $('memcol').value = getCookie("memColor", "green");
  $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
  theTime.innerHTML = (manualEnter==1) ?
   "<input id='timeEntry' size=12 style='font-size:100%'>"+
   " <span onclick='stopTimer(13);' class='a' style='color:"+
   parseColor($('lcol').value)+"'>enter</span>" : "ready";
- timerSize = (a=getCookie("timerSize"))===null ? 2 : a;
+ timerSize = getCookie("timerSize", 2);
  theTime.style.fontSize = timerSize + "em";
- scrambleSize = (a=getCookie("scrSize"))===null ? 16 : parseInt(a,10);
+ scrambleSize = (a=getCookie("scrSize", ""))==="" ? 16 : parseInt(a,10);
  scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
- inspection = (a=getCookie("inspection"))===null ? 0 : a;
+ inspection = getCookie("inspection", 0);
  $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- if (inspection==0) { useBld = (a=getCookie("useBld"))===null ? 0 : a; }
+ if (inspection==0) { useBld = getCookie("useBld", 0); }
  else { useBld = 0; setCookie("useBld", 0); }
  $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
- useAvgN = (a=getCookie("useAvgN"))===null ? 0 : a;
+ useAvgN = getCookie("useAvgN", 0);
  $('avgn').innerHTML = (useAvgN==1) ? "using" : "not using";
- useMoN = (a=getCookie("useMoN"))===null ? 0 : a;
+ useMoN = getCookie("useMoN", 0);
  $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
- useMono = (a=getCookie("useMono"))===null ? 0 : a;
+ useMono = getCookie("useMono", 0);
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
  scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
  $('getlast').style.color = parseColor($('lcol').value);
- type = (a=getCookie("scrType"))===null ? "333" : a;
+ type = getCookie("scrType", "333");
  if (query.length > 0) type = query;
  
  loadList();
@@ -663,7 +663,7 @@ function setCookie(name,value) {
  }
 }
 
-function getCookie(name) {
+function getCookie(name, defaultval) {
  var cookies = document.cookie.split(';');
  var x = "qqTimer=";
  for (var i=0; i<cookies.length; i++) {
@@ -679,7 +679,7 @@ function getCookie(name) {
    } 
   }
  }
- return null;
+ return defaultval;
 }
 
 function saveSession() {
