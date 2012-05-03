@@ -85,10 +85,9 @@ function initialize(lookForTimes, checkQueryString) {
  useMilli = getCookie("useMilli", false);
  $('millisec').innerHTML = (useMilli) ? "1\/1000 sec" : "1\/100 sec";
  var oldManualEnter = manualEnter;
- manualEnter = getCookie("manualEnter", 0);
+ manualEnter = getCookie("manualEnter", false);
  if (manualEnter != oldManualEnter) {
   toggleInput();
-  manualEnter = 1 - manualEnter;
  }
  $('tcol').value = getCookie("tColor", "00ff00");
  $('bcol').value = getCookie("bColor", "white");
@@ -96,11 +95,6 @@ function initialize(lookForTimes, checkQueryString) {
  $('lcol').value = getCookie("lColor", "blue");
  $('hcol').value = getCookie("hColor", "yellow");
  $('memcol').value = getCookie("memColor", "green");
- $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- theTime.innerHTML = (manualEnter==1) ?
-  "<input id='timeEntry' size=12 style='font-size:100%'>"+
-  " <span onclick='stopTimer(13);' class='a' style='color:"+
-  parseColor($('lcol').value)+"'>enter</span>" : "ready";
  timerSize = getCookie("timerSize", 2);
  theTime.style.fontSize = timerSize + "em";
  scrambleSize = (a=getCookie("scrSize", ""))==="" ? 16 : parseInt(a,10);
@@ -193,9 +187,9 @@ function loadOptBoxes() {
 }
 
 function startTimer(keyCode) {
- if (timerStatus == 0 && manualEnter == 0 && keyCode == 32 && importFocus == 0) {
+ if (timerStatus == 0 && !manualEnter && keyCode == 32 && importFocus == 0) {
   timerStatus = 3;
- } else if (timerStatus == 3 && manualEnter == 0 && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
+ } else if (timerStatus == 3 && !manualEnter && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
   if (type=="sqrs") { scrambleEl.innerHTML = "scramble: loading... "; }
   if (inspection == 1) {
    timerStatus = 2;
@@ -245,7 +239,7 @@ function stopTimer(keyCode) {
   $('optbox').blur();
   $('leng').blur();
  }
- if (manualEnter == 1) {
+ if (manualEnter) {
   if (keyCode == 13) {
    var timeStr = $('timeEntry').value;
    if (timeStr.match(/.* .*/)) {
@@ -272,7 +266,7 @@ function stopTimer(keyCode) {
 }
 
 function checkKey(keyCode) {
- if (keyCode == 13 || manualEnter == 0) stopTimer(keyCode);
+ if (keyCode == 13 || !manualEnter) stopTimer(keyCode);
 }
 
 
@@ -452,7 +446,7 @@ function getBrowser() {
 
 
 var useMilli = false;
-var manualEnter = 0;
+var manualEnter = false;
 var showOptions = 0;
 var timerSize = 2;
 var scrambleSize = 16;
@@ -505,11 +499,11 @@ function toggleMono() {
 }
 
 function toggleInput() {
- if (manualEnter == 0) stopTimer();
- manualEnter = 1 - manualEnter;
+ if (!manualEnter) stopTimer();
+ manualEnter = !manualEnter;
  setCookie("manualEnter", manualEnter);
- $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- theTime.innerHTML = (manualEnter==1) ?
+ $('inputTimes').innerHTML = (manualEnter) ? "typing" : "timer";
+ theTime.innerHTML = (manualEnter) ?
   "<input id='timeEntry' size=12 style='font-size:100%'>"+
   " <span onclick='stopTimer(13);' class='a' style='color:"+
   parseColor($('lcol').value)+"'>enter</span>" : "ready";
