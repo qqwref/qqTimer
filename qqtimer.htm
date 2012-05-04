@@ -102,9 +102,9 @@ function initialize(lookForTimes, checkQueryString) {
  $('getlast').style.fontSize = scrambleSize + "px";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
- inspection = getCookie("inspection", 0);
- $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- if (inspection==0) { useBld = getCookie("useBld", false); }
+ useInspection = getCookie("inspection", false);
+ $('inspec').innerHTML = (useInspection) ? "WCA" : "no";
+ if (!useInspection) { useBld = getCookie("useBld", false); }
  else { useBld = false; setCookie("useBld", false); }
  $('bldmode').innerHTML = (useBld) ? "on" : "off";
  useAvgN = getCookie("useAvgN", 0);
@@ -191,7 +191,7 @@ function startTimer(keyCode) {
   timerStatus = 3;
  } else if (timerStatus == 3 && !manualEnter && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
   if (type=="sqrs") { scrambleEl.innerHTML = "scramble: loading... "; }
-  if (inspection == 1) {
+  if (useInspection) {
    timerStatus = 2;
    inspectionTime = new Date().getTime();
    theTime.style.color = "red";
@@ -450,10 +450,11 @@ var manualEnter = false;
 var showOptions = 0;
 var timerSize = 2;
 var scrambleSize = 16;
-var inspection = 0;
+var useInspection = false;
 var useBld = false;
 var penalty = 0;
 var useAvgN = 0;
+var useMoN = false;
 var viewstats = 1;
 var importFocus = 0;
 var validColors = ["black","brown","white","purple","violet","red","orange","yellow","green","cyan","blue","gray","grey","pink"];
@@ -485,7 +486,7 @@ function toggleMilli() {
 }
 
 function toggleBld() {
- if (inspection==0) { useBld = !useBld; }
+ if (!useInspection) { useBld = !useBld; }
  setCookie("useBld", useBld);
  $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
@@ -545,11 +546,11 @@ function decreaseScrambleSize() {
 }
 
 function toggleInspection() {
- inspection = 1 - inspection;
- if (inspection==1) { useBld = false; }
+ useInspection = !useInspection;
+ if (useInspection) { useBld = false; }
  setCookie("useBld", useBld);
- setCookie("inspection", inspection);
- $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
+ setCookie("inspection", useInspection);
+ $('inspec').innerHTML = (useInspection) ? "WCA" : "no";
  $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
 
