@@ -25,8 +25,11 @@ var timerupdate = 1;
 var highlightStart;
 var highlightStop;
 var highlightID;
-var sessionID=0;
+var sessionID = 0;
 var initoncesq1 = 1;
+
+// cache commonly used elements, so we don't hit the DOM all the time
+var theTime, scrambleEl;
 
 function $(str){return document.getElementById(str);}
 
@@ -34,7 +37,7 @@ function $(str){return document.getElementById(str);}
 // #################### TIMER STUFF ####################
 
 // deal with styles
-var styleName = "style" + ((a=getCookie("style"))==null?0:a) + ".css";
+var styleName = "style" + getCookie("style", 0) + ".css";
 document.writeln("<link rel='stylesheet' type='text/css' href='"+styleName+"'>");
 
 // firefox 9.0.1 bugfix
@@ -42,6 +45,9 @@ window.onkeydown = function(event) {checkKey(event.keyCode); };
 window.onkeyup = function(event) {startTimer(event.keyCode); };
 
 function initialize(lookForTimes, checkQueryString) {
+  theTime = $('theTime');
+  scrambleEl = $('scramble');
+
  loadOptBoxes();
  var query = ""; // query string for scrambles
  if (checkQueryString) {
@@ -74,48 +80,42 @@ function initialize(lookForTimes, checkQueryString) {
  if (timerStatus != 0) {clearInterval(timerID); clearInterval(inspectionID);}
  timerStatus = 3;
 
- timerupdate = (a=getCookie("timerupdate"))===null ? 1 : a;
+ timerupdate = getCookie("timerupdate", 1);
  $('toggler').innerHTML = (timerupdate==0) ? "off" : (timerupdate==1) ? "on" : "seconds only";
- useMilli = (a=getCookie("useMilli"))===null ? 0 : a;
- $('millisec').innerHTML = (useMilli==1) ? "1\/1000 sec" : "1\/100 sec";
+ useMilli = getCookie("useMilli", false);
+ $('millisec').innerHTML = (useMilli) ? "1\/1000 sec" : "1\/100 sec";
  var oldManualEnter = manualEnter;
- manualEnter = (a=getCookie("manualEnter"))===null ? 0 : a;
- if (manualEnter!=oldManualEnter) {
+ manualEnter = getCookie("manualEnter", false);
+ if (manualEnter != oldManualEnter) {
   toggleInput();
-  manualEnter = 1-manualEnter;
  }
- $('tcol').value = (a=getCookie("tColor"))===null ? "00ff00" : a;
- $('bcol').value = (a=getCookie("bColor"))===null ? "white" : a;
- $('fcol').value = (a=getCookie("fColor"))===null ? "black" : a;
- $('lcol').value = (a=getCookie("lColor"))===null ? "blue" : a;
- $('hcol').value = (a=getCookie("hColor"))===null ? "yellow" : a;
- $('memcol').value = (a=getCookie("memColor"))===null ? "green" : a;
- $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- $('theTime').innerHTML = (manualEnter==1) ?
-  "<input id='timeEntry' size=12 style='font-size:100%'>"+
-  " <span onclick='stopTimer(13);' class='a' style='color:"+
-  parseColor($('lcol').value)+"'>enter</span>" : "ready";
- timerSize = (a=getCookie("timerSize"))===null ? 2 : a;
- $('theTime').style.fontSize = timerSize + "em";
- scrambleSize = (a=getCookie("scrSize"))===null ? 16 : parseInt(a,10);
- $('scramble').style.fontSize = scrambleSize + "px";
+ $('tcol').value = getCookie("tColor", "00ff00");
+ $('bcol').value = getCookie("bColor", "white");
+ $('fcol').value = getCookie("fColor", "black");
+ $('lcol').value = getCookie("lColor", "blue");
+ $('hcol').value = getCookie("hColor", "yellow");
+ $('memcol').value = getCookie("memColor", "green");
+ timerSize = getCookie("timerSize", 2);
+ theTime.style.fontSize = timerSize + "em";
+ scrambleSize = (a=getCookie("scrSize", ""))==="" ? 16 : parseInt(a,10);
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
- inspection = (a=getCookie("inspection"))===null ? 0 : a;
- $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- if (inspection==0) { useBld = (a=getCookie("useBld"))===null ? 0 : a; }
- else { useBld = 0; setCookie("useBld", 0); }
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
- useAvgN = (a=getCookie("useAvgN"))===null ? 0 : a;
+ useInspection = getCookie("inspection", false);
+ $('inspec').innerHTML = (useInspection) ? "WCA" : "no";
+ if (!useInspection) { useBld = getCookie("useBld", false); }
+ else { useBld = false; setCookie("useBld", false); }
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
+ useAvgN = getCookie("useAvgN", 0);
  $('avgn').innerHTML = (useAvgN==1) ? "using" : "not using";
- useMoN = (a=getCookie("useMoN"))===null ? 0 : a;
- $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
- useMono = (a=getCookie("useMono"))===null ? 0 : a;
+ useMoN = getCookie("useMoN", false);
+ $('mon').innerHTML = (useMoN) ? "using" : "not using";
+ useMono = getCookie("useMono", 0);
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
- $('scramble').style.fontFamily = (useMono==1) ? "monospace" : "serif";
+ scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
  $('getlast').style.color = parseColor($('lcol').value);
- type = (a=getCookie("scrType"))===null ? "333" : a;
+ type = getCookie("scrType", "333");
  if (query.length > 0) type = query;
  
  loadList();
@@ -187,50 +187,50 @@ function loadOptBoxes() {
 }
 
 function startTimer(keyCode) {
- if (timerStatus == 0 && manualEnter == 0 && keyCode == 32 && importFocus == 0) {
+ if (timerStatus == 0 && !manualEnter && keyCode == 32 && importFocus == 0) {
   timerStatus = 3;
- } else if (timerStatus == 3 && manualEnter == 0 && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
-  if (type=="sqrs") { $('scramble').innerHTML = "scramble: loading... "; }
-  if (inspection == 1) {
+ } else if (timerStatus == 3 && !manualEnter && keyCode == 32 && (new Date()).getTime() - curTime >= 300 && importFocus == 0) {
+  if (type=="sqrs") { scrambleEl.innerHTML = "scramble: loading... "; }
+  if (useInspection) {
    timerStatus = 2;
    inspectionTime = new Date().getTime();
-   $('theTime').style.color = "red";
+   theTime.style.color = "red";
    inspectionID = setInterval(updateInspec, (timerupdate==1)?10:100);
-  } else if (useBld == 1) {
+  } else if (useBld) {
    timerStatus = 4;
    memoTime = new Date().getTime();
-   $('theTime').style.color = $('memcol').value;
+   theTime.style.color = $('memcol').value;
    if (timerupdate > 0) {memoID = setInterval(updateMemo, (timerupdate==1)?10:100);}
-   else {$('theTime').innerHTML = "memorizing";}
+   else {theTime.innerHTML = "memorizing";}
   } else {
    timerStatus = 1;
    startTime = new Date().getTime();
    penalty = 0;
-   $('theTime').style.color = $('fcol').value;
+   theTime.style.color = $('fcol').value;
    if (timerupdate > 0) {timerID = setInterval(updateTimer, (timerupdate==1)?10:100);}
-   else {$('theTime').innerHTML = "running";}
+   else {theTime.innerHTML = "running";}
   }
  } else if (timerStatus == 4 && keyCode == 32) {
   timerStatus = 1;
   startTime = new Date().getTime();
-  $('theTime').style.color = $('fcol').value;
+  theTime.style.color = $('fcol').value;
   var memoLength = startTime - memoTime;
   if (timerupdate > 0) {
    clearInterval(memoID);
    timerID = setInterval(updateMemo, (timerupdate==1)?10:100);
   }
-  else {$('theTime').innerHTML = "running";}
+  else {theTime.innerHTML = "running";}
  } else if (timerStatus == 2 && keyCode == 32) {
   timerStatus = 1;
   startTime = new Date().getTime();
-  $('theTime').style.color = $('fcol').value;
+  theTime.style.color = $('fcol').value;
   var inspecLength = startTime - inspectionTime;
   penalty = (inspecLength < 15000) ? 0 : (inspecLength < 17000) ? 2 : 1;
   clearInterval(inspectionID);
   if (timerupdate > 0) {
    timerID = setInterval(updateTimer, (timerupdate==1)?10:100);
   }
-  else {$('theTime').innerHTML = "running";}
+  else {theTime.innerHTML = "running";}
  }
 }
 
@@ -239,7 +239,7 @@ function stopTimer(keyCode) {
   $('optbox').blur();
   $('leng').blur();
  }
- if (manualEnter == 1) {
+ if (manualEnter) {
   if (keyCode == 13) {
    var timeStr = $('timeEntry').value;
    if (timeStr.match(/.* .*/)) {
@@ -266,7 +266,7 @@ function stopTimer(keyCode) {
 }
 
 function checkKey(keyCode) {
- if (keyCode == 13 || manualEnter == 0) stopTimer(keyCode);
+ if (keyCode == 13 || !manualEnter) stopTimer(keyCode);
 }
 
 
@@ -274,9 +274,9 @@ function updateTimer() {
  curTime = new Date().getTime();
  var time = curTime - startTime;
  if (timerupdate == 1) {
-  $('theTime').innerHTML = pretty(time);
+  theTime.innerHTML = pretty(time);
  } else {
-  $('theTime').innerHTML = pretty(time).split(".")[0];
+  theTime.innerHTML = pretty(time).split(".")[0];
  }
 }
 
@@ -284,22 +284,22 @@ function updateMemo() {
  curTime = new Date().getTime();
  var time = curTime - memoTime;
  if (timerupdate == 1) {
-  $('theTime').innerHTML = pretty(time);
+  theTime.innerHTML = pretty(time);
  } else {
-  $('theTime').innerHTML = pretty(time).split(".")[0];
+  theTime.innerHTML = pretty(time).split(".")[0];
  }
 }
 
 function updateInspec() {
  curTime = new Date().getTime();
  var time = curTime - inspectionTime;
- $('theTime').innerHTML = (time > 17000) ? "DNF" : (time > 15000) ? "+2" : 15-Math.floor(time/1000);
+ theTime.innerHTML = (time > 17000) ? "DNF" : (time > 15000) ? "+2" : 15-Math.floor(time/1000);
 }
 
 function getTime(note) {
  curTime = new Date().getTime();
  
- if (useBld==1) { 
+ if (useBld) {
   var time = curTime - memoTime;
   var mtime = startTime - memoTime;
  } 
@@ -308,13 +308,13 @@ function getTime(note) {
  }
  times[times.length] = time;
  notes[notes.length] = note;
- if (useBld==1) { 
+ if (useBld) {
   comments[comments.length] = pretty(mtime) 
  }
  else { 
   comments[comments.length] = ""; 
  }
- $('theTime').innerHTML = pretty(time);
+ theTime.innerHTML = pretty(time);
  clearHighlight();
  loadList();
  getStats(true); // should be false, but it doesn't hurt
@@ -407,7 +407,7 @@ function del(index) {
 }
 
 function getlastscramble() {
- $('scramble').innerHTML = "scramble: " + scramble + "<br> last scramble: " + lastscramble;
+ scrambleEl.innerHTML = "scramble: " + scramble + "<br> last scramble: " + lastscramble;
  $('getlast').innerHTML = "";
 }
 
@@ -445,15 +445,16 @@ function getBrowser() {
 // #################### OPTIONS ####################
 
 
-var useMilli = 0;
-var manualEnter = 0;
+var useMilli = false;
+var manualEnter = false;
 var showOptions = 0;
 var timerSize = 2;
 var scrambleSize = 16;
-var inspection = 0;
-var useBld = 0;
+var useInspection = false;
+var useBld = false;
 var penalty = 0;
 var useAvgN = 0;
+var useMoN = false;
 var viewstats = 1;
 var importFocus = 0;
 var validColors = ["black","brown","white","purple","violet","red","orange","yellow","green","cyan","blue","gray","grey","pink"];
@@ -477,33 +478,33 @@ function toggleTimer() {
 }
 
 function toggleMilli() {
- useMilli = 1 - useMilli;
+ useMilli = !useMilli;
  setCookie("useMilli", useMilli);
- $('millisec').innerHTML = (useMilli==1) ? "1\/1000 sec" : "1\/100 sec";
+ $('millisec').innerHTML = (useMilli) ? "1\/1000 sec" : "1\/100 sec";
  loadList();
  getStats(true);
 }
 
 function toggleBld() {
- if (inspection==0) { useBld = 1 - useBld; }
+ if (!useInspection) { useBld = !useBld; }
  setCookie("useBld", useBld);
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
 
 function toggleMono() {
  useMono = 1 - useMono;
  setCookie("useMono", useMono);
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
- $('scramble').style.fontFamily = (useMono==1) ? "monospace" : "serif";
+ scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
  $('getlast').style.color = parseColor($('lcol').value);
 }
 
 function toggleInput() {
- if (manualEnter == 0) stopTimer();
- manualEnter = 1 - manualEnter;
+ if (!manualEnter) stopTimer();
+ manualEnter = !manualEnter;
  setCookie("manualEnter", manualEnter);
- $('inputTimes').innerHTML = (manualEnter==1) ? "typing" : "timer";
- $('theTime').innerHTML = (manualEnter==1) ?
+ $('inputTimes').innerHTML = (manualEnter) ? "typing" : "timer";
+ theTime.innerHTML = (manualEnter) ?
   "<input id='timeEntry' size=12 style='font-size:100%'>"+
   " <span onclick='stopTimer(13);' class='a' style='color:"+
   parseColor($('lcol').value)+"'>enter</span>" : "ready";
@@ -518,14 +519,14 @@ function toggleOptions() {
 function increaseSize() {
  timerSize++;
  setCookie("timerSize", timerSize);
- $('theTime').style.fontSize = timerSize + "em"; $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
+ theTime.style.fontSize = timerSize + "em"; $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
 }
 
 function decreaseSize() {
  if (timerSize >= 2) timerSize--;
  setCookie("timerSize", timerSize);
- $('theTime').style.fontSize = timerSize + "em";
+ theTime.style.fontSize = timerSize + "em";
  $('theList').style.height = Math.max(16, (timerSize * 1.5)) + "em";
  $('stats').style.height = Math.max(16, (timerSize * 1.5)) + "em";
 }
@@ -533,24 +534,24 @@ function decreaseSize() {
 function increaseScrambleSize() {
  scrambleSize+=4;
  setCookie("scrSize", scrambleSize);
- $('scramble').style.fontSize = scrambleSize + "px";
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
 }
 
 function decreaseScrambleSize() {
  if (scrambleSize > 8) scrambleSize-=4;
  setCookie("scrSize", scrambleSize);
- $('scramble').style.fontSize = scrambleSize + "px";
+ scrambleEl.style.fontSize = scrambleSize + "px";
  $('getlast').style.fontSize = scrambleSize + "px";
 }
 
 function toggleInspection() {
- inspection = 1 - inspection;
- if (inspection==1) { useBld = 0; }
+ useInspection = !useInspection;
+ if (useInspection) { useBld = false; }
  setCookie("useBld", useBld);
- setCookie("inspection", inspection);
- $('inspec').innerHTML = (inspection==1) ? "WCA" : "no";
- $('bldmode').innerHTML = (useBld==1) ? "on" : "off";
+ setCookie("inspection", useInspection);
+ $('inspec').innerHTML = (useInspection) ? "WCA" : "no";
+ $('bldmode').innerHTML = (useBld) ? "on" : "off";
 }
 
 function toggleAvgN() {
@@ -561,9 +562,9 @@ function toggleAvgN() {
 }
 
 function toggleMoN() {
- useMoN = 1 - useMoN;
+ useMoN = !useMoN;
  setCookie("useMoN", useMoN);
- $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
+ $('mon').innerHTML = (useMoN) ? "using" : "not using";
  getStats(true);
 }
 
@@ -657,7 +658,7 @@ function setCookie(name,value) {
  }
 }
 
-function getCookie(name) {
+function getCookie(name, defaultval) {
  var cookies = document.cookie.split(';');
  var x = "qqTimer=";
  for (var i=0; i<cookies.length; i++) {
@@ -673,7 +674,7 @@ function getCookie(name) {
    } 
   }
  }
- return null;
+ return defaultval;
 }
 
 function saveSession() {
@@ -813,7 +814,7 @@ function getStats(recalc) {
   s += "<br>best time: <span onclick='setHighlight(" + bestTimeIndex + ",1,0);loadList();' class='a'>";
   s += pretty(bestTime) + "<\/span><br>worst time: <span onclick='setHighlight(" + worstTimeIndex;
   s += ",1,1);loadList();' class='a'>" + pretty(worstTime) + "<\/span><br>";
-  if (useMoN==1) {
+  if (useMoN) {
    if (times.length >= moSize) {
     s += "<br>current mo" + moSize + ": <span onclick='setHighlight(" + (times.length - moSize);
     s += "," + moSize + "," + moSize + "2);loadList();' class='a'>" + pretty(lastMo[0]);
@@ -970,7 +971,7 @@ function getAvgSD(start, nsolves, SD) {
  var timeArr = [], t, j;
  for (j=0; j<nsolves; j++) {
   t = (notes[start+j]==1 ? -1 : times[start+j]/10 + notes[start+j]*100);
-  t = (useMilli==0 ? 10*Math.round(t) : 10*t);
+  t = (useMilli ? 10*t : 10*Math.round(t));
   timeArr[timeArr.length] = [t, j];
  }
 
@@ -1009,7 +1010,7 @@ function getMeanSD(start, nsolves, SD) {
  var timeArr = [], t, j;
  for (j=0; j<nsolves; j++) {
   t = (notes[start+j]==1 ? -1 : times[start+j]/10 + notes[start+j]*100);
-  t = (useMilli==0 ? 10*Math.round(t) : 10*t);
+  t = (useMilli ? 10*t : 10*Math.round(t));
   timeArr[timeArr.length] = [t, j];
  }
 
@@ -1047,15 +1048,15 @@ function trim(number, nDigits) {
 
 function pretty(time) {
  if (time < 0) {return "DNF";}
- time = Math.round(time / (useMilli==1 ? 1 : 10));
- var bits = time % (useMilli==1 ? 1000 : 100);
- time = (time - bits) / (useMilli==1 ? 1000 : 100);
+ time = Math.round(time / (useMilli ? 1 : 10));
+ var bits = time % (useMilli ? 1000 : 100);
+ time = (time - bits) / (useMilli ? 1000 : 100);
  var secs = time % 60;
  var mins = ((time - secs) / 60) % 60;
  var hours = (time - secs - 60 * mins) / 3600;
  var s = "" + bits;
  if (bits < 10) {s = "0" + s;}
- if (bits < 100 && useMilli==1) {s = "0" + s;}
+ if (bits < 100 && useMilli) {s = "0" + s;}
  s = secs + "." + s;
  if (secs < 10 && (mins > 0 || hours > 0)) {s = "0" + s;}
  if (mins > 0 || hours > 0) {s = mins + ":" + s;}
@@ -1595,7 +1596,7 @@ function scrambleIt(){
   megascramble([["OMG"],["WOW"],["WTF"],[["WOO-HOO","WOO-HOO","MATYAS","YES","YES","YAY","YEEEEEEEEEEEES"]],["HAHA"],["XD"],[":D"],["LOL"]],["","","","!!!"]);
  }
  scramble = ss[0];
- $('scramble').innerHTML = "scramble: " + scramble + "&nbsp;";
+ scrambleEl.innerHTML = "scramble: " + scramble + "&nbsp;";
 }
 
 // Clock functions.
