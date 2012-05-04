@@ -1,0 +1,7 @@
+- "edit last time" function
+- context menu for modifying existing times
+- use localStorage object
+- option: all times below X get green, all above Y get red
+- half-modded 6x6 scrambler
+- import scrambles
+- if >17 seconds of inspection is used, when inspection stops, stop timer, give the total inspection time in red, and add that time with DNF
