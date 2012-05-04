@@ -109,8 +109,8 @@ function initialize(lookForTimes, checkQueryString) {
  $('bldmode').innerHTML = (useBld) ? "on" : "off";
  useAvgN = getCookie("useAvgN", 0);
  $('avgn').innerHTML = (useAvgN==1) ? "using" : "not using";
- useMoN = getCookie("useMoN", 0);
- $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
+ useMoN = getCookie("useMoN", false);
+ $('mon').innerHTML = (useMoN) ? "using" : "not using";
  useMono = getCookie("useMono", 0);
  $('monospace').innerHTML = (useMono==1) ? "on" : "off";
  scrambleEl.style.fontFamily = (useMono==1) ? "monospace" : "serif";
@@ -561,9 +561,9 @@ function toggleAvgN() {
 }
 
 function toggleMoN() {
- useMoN = 1 - useMoN;
+ useMoN = !useMoN;
  setCookie("useMoN", useMoN);
- $('mon').innerHTML = (useMoN==1) ? "using" : "not using";
+ $('mon').innerHTML = (useMoN) ? "using" : "not using";
  getStats(true);
 }
 
@@ -813,7 +813,7 @@ function getStats(recalc) {
   s += "<br>best time: <span onclick='setHighlight(" + bestTimeIndex + ",1,0);loadList();' class='a'>";
   s += pretty(bestTime) + "<\/span><br>worst time: <span onclick='setHighlight(" + worstTimeIndex;
   s += ",1,1);loadList();' class='a'>" + pretty(worstTime) + "<\/span><br>";
-  if (useMoN==1) {
+  if (useMoN) {
    if (times.length >= moSize) {
     s += "<br>current mo" + moSize + ": <span onclick='setHighlight(" + (times.length - moSize);
     s += "," + moSize + "," + moSize + "2);loadList();' class='a'>" + pretty(lastMo[0]);
